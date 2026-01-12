@@ -1,0 +1,65 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+# Placeholder variable group for platform provisioning
+variables:
+  - group: platform-infra-dev
+
+stages:
+- stage: Terraform
+  displayName: Terraform (validate/plan/apply)
+  jobs:
+  - job: Apply
+    displayName: Apply
+    steps:
+    - checkout: self
+
+    # Uses an Azure RM service connection; Terraform authenticates via ARM_* env vars.
+    - task: AzureCLI@2
+      displayName: Terraform apply + publish outputs
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        addSpnToEnvironment: true
+        inlineScript: |
+          set -euo pipefail
+
+          cd terraform
+
+          export ARM_CLIENT_ID="$servicePrincipalId"
+          export ARM_CLIENT_SECRET="$servicePrincipalKey"
+          export ARM_TENANT_ID="$tenantId"
+          export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+
+          terraform --version
+          terraform init
+          terraform validate
+          terraform plan -out tfplan
+          terraform apply -auto-approve tfplan
+
+          mkdir -p out
+
+          # Optional JSON for debugging (MUST be non-secret outputs only).
+          terraform output -json > out/infra_outputs.json
+
+          # Env file contract for downstream pipelines.
+          {
+            echo "AZURE_RG=$(terraform output -raw resource_group_name)"
+            echo "AKS_NAME=$(terraform output -raw aks_name)"
+            echo "ACR_NAME=$(terraform output -raw acr_name)"
+            echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)"
+          } > out/infra_outputs.env
+
+          echo "Generated infra outputs:"
+          cat out/infra_outputs.env
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish pipeline artifact: infra-outputs
+      inputs:
+        targetPath: terraform/out
+        artifact: infra-outputs
+        publishLocation: pipeline
