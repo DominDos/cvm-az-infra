@@ -24,6 +24,18 @@ variable "node_vm_size" {
   default     = "Standard_DS2_v2"
 }
 
+variable "node_min_count" {
+  type        = number
+  description = "Minimum number of nodes for the system node pool when autoscaling is enabled"
+  default     = 2
+}
+
+variable "node_max_count" {
+  type        = number
+  description = "Maximum number of nodes for the system node pool when autoscaling is enabled"
+  default     = 4
+}
+
 variable "kubernetes_version" {
   type        = string
   description = "Optional Kubernetes version (null for default)"
