@@ -47,10 +47,25 @@ steps:
       $workDir = '${{ parameters.workingDirectory }}'
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
-      $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey
       $env:ARM_TENANT_ID = $env:tenantId
       $env:ARM_SUBSCRIPTION_ID = (az account show --query id -o tsv)
       $env:ARM_USE_AZUREAD = 'true'
+
+      # Azure DevOps service connection may be configured either with a client secret (servicePrincipalKey)
+      # or with workload identity federation (OIDC). Configure azurerm provider accordingly.
+      if (-not [string]::IsNullOrWhiteSpace($env:servicePrincipalKey)) {
+        $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey
+        if (Test-Path Env:ARM_USE_OIDC) { Remove-Item Env:ARM_USE_OIDC -ErrorAction SilentlyContinue }
+        if (Test-Path Env:ARM_OIDC_TOKEN) { Remove-Item Env:ARM_OIDC_TOKEN -ErrorAction SilentlyContinue }
+      }
+      elseif (-not [string]::IsNullOrWhiteSpace($env:idToken)) {
+        $env:ARM_USE_OIDC = 'true'
+        $env:ARM_OIDC_TOKEN = $env:idToken
+        if (Test-Path Env:ARM_CLIENT_SECRET) { Remove-Item Env:ARM_CLIENT_SECRET -ErrorAction SilentlyContinue }
+      }
+      else {
+        throw 'No Service Principal secret (servicePrincipalKey) or OIDC token (idToken) provided by the Azure service connection. Update the Azure DevOps service connection auth method.'
+      }
 
       if ([string]::IsNullOrWhiteSpace($env:TF_STATE_RG) -or
           [string]::IsNullOrWhiteSpace($env:TF_STATE_STORAGE) -or
