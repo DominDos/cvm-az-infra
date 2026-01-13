@@ -40,11 +40,6 @@ steps:
     addSpnToEnvironment: true
     scriptType: pscore
     scriptLocation: inlineScript
-  env:
-    TF_STATE_RG: $(TF_STATE_RG)
-    TF_STATE_STORAGE: $(TF_STATE_STORAGE)
-    TF_STATE_CONTAINER: $(TF_STATE_CONTAINER)
-    TF_STATE_KEY: $(TF_STATE_KEY)
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
@@ -77,6 +72,11 @@ steps:
 
       Write-Host "##vso[task.setvariable variable=AKS_NAME]$aksName"
       Write-Host "##vso[task.setvariable variable=AKS_RG]$aksRg"
+  env:
+    TF_STATE_RG: $(TF_STATE_RG)
+    TF_STATE_STORAGE: $(TF_STATE_STORAGE)
+    TF_STATE_CONTAINER: $(TF_STATE_CONTAINER)
+    TF_STATE_KEY: $(TF_STATE_KEY)
 
 - task: AzureCLI@2
   displayName: Install ingress-nginx
