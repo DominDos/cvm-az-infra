@@ -68,11 +68,15 @@ steps:
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
         -backend-config="key=$($env:TF_STATE_KEY)"
+      if ($LASTEXITCODE -ne 0) { throw "terraform init failed with exit code $LASTEXITCODE" }
 
       terraform apply -auto-approve -input=false tfplan
+      if ($LASTEXITCODE -ne 0) { throw "terraform apply failed with exit code $LASTEXITCODE" }
 
       $aksName = (terraform output -raw aks_name)
+      if ($LASTEXITCODE -ne 0) { throw "terraform output aks_name failed with exit code $LASTEXITCODE" }
       $aksRg = (terraform output -raw resource_group_name)
+      if ($LASTEXITCODE -ne 0) { throw "terraform output resource_group_name failed with exit code $LASTEXITCODE" }
 
       Write-Host "##vso[task.setvariable variable=AKS_NAME]$aksName"
       Write-Host "##vso[task.setvariable variable=AKS_RG]$aksRg"

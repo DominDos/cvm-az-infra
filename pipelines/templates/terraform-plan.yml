@@ -29,7 +29,9 @@ steps:
 
 - pwsh: |
     $ErrorActionPreference = 'Stop'
+
     terraform -chdir='${{ parameters.workingDirectory }}' fmt -check -recursive
+    if ($LASTEXITCODE -ne 0) { throw "terraform fmt failed with exit code $LASTEXITCODE" }
   displayName: Terraform fmt (check)
 
 - task: AzureCLI@2
@@ -65,9 +67,12 @@ steps:
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
         -backend-config="key=$($env:TF_STATE_KEY)"
+      if ($LASTEXITCODE -ne 0) { throw "terraform init failed with exit code $LASTEXITCODE" }
 
       terraform validate
+      if ($LASTEXITCODE -ne 0) { throw "terraform validate failed with exit code $LASTEXITCODE" }
       terraform plan -out=tfplan -input=false
+      if ($LASTEXITCODE -ne 0) { throw "terraform plan failed with exit code $LASTEXITCODE" }
   env:
     TF_STATE_RG: $(TF_STATE_RG)
     TF_STATE_STORAGE: $(TF_STATE_STORAGE)
