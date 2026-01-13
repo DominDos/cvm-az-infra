@@ -67,11 +67,10 @@ steps:
       }
 
       $backendVars = @{
-        TF_STATE_RG         = $env:TF_STATE_RG
-        TF_STATE_STORAGE    = $env:TF_STATE_STORAGE
-        TF_STATE_CONTAINER  = $env:TF_STATE_CONTAINER
-        TF_STATE_KEY        = $env:TF_STATE_KEY
-        TF_STATE_ACCESS_KEY = $env:TF_STATE_ACCESS_KEY
+        TF_STATE_RG        = $env:TF_STATE_RG
+        TF_STATE_STORAGE   = $env:TF_STATE_STORAGE
+        TF_STATE_CONTAINER = $env:TF_STATE_CONTAINER
+        TF_STATE_KEY       = $env:TF_STATE_KEY
       }
 
       $missing = @(
@@ -85,7 +84,11 @@ steps:
       }
 
       # Use storage account access key for backend data-plane auth (avoids needing Blob Data roles).
-      $env:ARM_ACCESS_KEY = $env:TF_STATE_ACCESS_KEY
+      $accountKey = (az storage account keys list --account-name $env:TF_STATE_STORAGE --resource-group $env:TF_STATE_RG --query "[0].value" -o tsv)
+      if ([string]::IsNullOrWhiteSpace($accountKey)) {
+        throw 'Failed to retrieve storage account key for Terraform backend. Ensure the service connection has permission to list storage keys.'
+      }
+      $env:ARM_ACCESS_KEY = $accountKey
 
       Copy-Item -Force "$(Pipeline.Workspace)/tfplan/tfplan" (Join-Path $workDir 'tfplan')
 
@@ -116,7 +119,6 @@ steps:
     TF_STATE_STORAGE: $(TF_STATE_STORAGE)
     TF_STATE_CONTAINER: $(TF_STATE_CONTAINER)
     TF_STATE_KEY: $(TF_STATE_KEY)
-    TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
 
 - task: AzureCLI@2
   displayName: Install ingress-nginx
