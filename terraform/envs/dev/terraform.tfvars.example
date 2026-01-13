@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars and adjust as needed.
+
+location = "westeurope"
+env      = "dev"
+prefix   = "cvm"
+
+tags = {
+  owner       = "cvm"
+  cost_center = "poc"
+}
+
+# null lets Azure pick the default version
+aks_kubernetes_version = null
+
+aks_dns_prefix   = "cvm-dev"
+aks_node_vm_size = "Standard_DS2_v2"
