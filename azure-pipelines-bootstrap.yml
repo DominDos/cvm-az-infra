@@ -2,7 +2,7 @@ trigger: none
 pr: none
 
 pool:
-  vmImage: ubuntu-latest
+  name: default
 
 variables:
   PREFIX: cvm

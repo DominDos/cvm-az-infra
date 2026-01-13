@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: default
 
 # Placeholder variable group for platform provisioning
 variables:
