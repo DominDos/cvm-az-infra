@@ -44,12 +44,13 @@ steps:
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
-      Set-Location '${{ parameters.workingDirectory }}'
+      $workDir = '${{ parameters.workingDirectory }}'
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
       $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey
       $env:ARM_TENANT_ID = $env:tenantId
-      $env:ARM_SUBSCRIPTION_ID = $env:subscriptionId
+      $env:ARM_SUBSCRIPTION_ID = (az account show --query id -o tsv)
+      $env:ARM_USE_AZUREAD = 'true'
 
       if ([string]::IsNullOrWhiteSpace($env:TF_STATE_RG) -or
           [string]::IsNullOrWhiteSpace($env:TF_STATE_STORAGE) -or
@@ -58,20 +59,21 @@ steps:
         throw 'Missing required backend variables: TF_STATE_RG, TF_STATE_STORAGE, TF_STATE_CONTAINER, TF_STATE_KEY.'
       }
 
-      if (Test-Path .terraform) {
-        Remove-Item -Recurse -Force .terraform
+      $tfDir = Join-Path $workDir '.terraform'
+      if (Test-Path $tfDir) {
+        Remove-Item -Recurse -Force $tfDir
       }
 
-      terraform init -input=false -reconfigure `
+      terraform -chdir="$workDir" init -input=false -reconfigure `
         -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
         -backend-config="key=$($env:TF_STATE_KEY)"
       if ($LASTEXITCODE -ne 0) { throw "terraform init failed with exit code $LASTEXITCODE" }
 
-      terraform validate
+      terraform -chdir="$workDir" validate
       if ($LASTEXITCODE -ne 0) { throw "terraform validate failed with exit code $LASTEXITCODE" }
-      terraform plan -out=tfplan -input=false
+      terraform -chdir="$workDir" plan -out=tfplan -input=false
       if ($LASTEXITCODE -ne 0) { throw "terraform plan failed with exit code $LASTEXITCODE" }
   env:
     TF_STATE_RG: $(TF_STATE_RG)

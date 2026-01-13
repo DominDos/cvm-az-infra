@@ -43,12 +43,13 @@ steps:
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
-      Set-Location '${{ parameters.workingDirectory }}'
+      $workDir = '${{ parameters.workingDirectory }}'
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
       $env:ARM_CLIENT_SECRET = $env:servicePrincipalKey
       $env:ARM_TENANT_ID = $env:tenantId
-      $env:ARM_SUBSCRIPTION_ID = $env:subscriptionId
+      $env:ARM_SUBSCRIPTION_ID = (az account show --query id -o tsv)
+      $env:ARM_USE_AZUREAD = 'true'
 
       if ([string]::IsNullOrWhiteSpace($env:TF_STATE_RG) -or
           [string]::IsNullOrWhiteSpace($env:TF_STATE_STORAGE) -or
@@ -57,25 +58,26 @@ steps:
         throw 'Missing required backend variables: TF_STATE_RG, TF_STATE_STORAGE, TF_STATE_CONTAINER, TF_STATE_KEY.'
       }
 
-      Copy-Item -Force "$(Pipeline.Workspace)/tfplan/tfplan" "./tfplan"
+      Copy-Item -Force "$(Pipeline.Workspace)/tfplan/tfplan" (Join-Path $workDir 'tfplan')
 
-      if (Test-Path .terraform) {
-        Remove-Item -Recurse -Force .terraform
+      $tfDir = Join-Path $workDir '.terraform'
+      if (Test-Path $tfDir) {
+        Remove-Item -Recurse -Force $tfDir
       }
 
-      terraform init -input=false -reconfigure `
+      terraform -chdir="$workDir" init -input=false -reconfigure `
         -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
         -backend-config="key=$($env:TF_STATE_KEY)"
       if ($LASTEXITCODE -ne 0) { throw "terraform init failed with exit code $LASTEXITCODE" }
 
-      terraform apply -auto-approve -input=false tfplan
+      terraform -chdir="$workDir" apply -auto-approve -input=false tfplan
       if ($LASTEXITCODE -ne 0) { throw "terraform apply failed with exit code $LASTEXITCODE" }
 
-      $aksName = (terraform output -raw aks_name)
+      $aksName = (terraform -chdir="$workDir" output -raw aks_name)
       if ($LASTEXITCODE -ne 0) { throw "terraform output aks_name failed with exit code $LASTEXITCODE" }
-      $aksRg = (terraform output -raw resource_group_name)
+      $aksRg = (terraform -chdir="$workDir" output -raw resource_group_name)
       if ($LASTEXITCODE -ne 0) { throw "terraform output resource_group_name failed with exit code $LASTEXITCODE" }
 
       Write-Host "##vso[task.setvariable variable=AKS_NAME]$aksName"
