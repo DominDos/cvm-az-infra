@@ -66,11 +66,21 @@ steps:
         throw 'No Service Principal secret (servicePrincipalKey) or OIDC token (idToken) provided by the Azure service connection. Update the Azure DevOps service connection auth method.'
       }
 
-      if ([string]::IsNullOrWhiteSpace($env:TF_STATE_RG) -or
-          [string]::IsNullOrWhiteSpace($env:TF_STATE_STORAGE) -or
-          [string]::IsNullOrWhiteSpace($env:TF_STATE_CONTAINER) -or
-          [string]::IsNullOrWhiteSpace($env:TF_STATE_KEY)) {
-        throw 'Missing required backend variables: TF_STATE_RG, TF_STATE_STORAGE, TF_STATE_CONTAINER, TF_STATE_KEY.'
+      $backendVars = @{
+        TF_STATE_RG        = $env:TF_STATE_RG
+        TF_STATE_STORAGE   = $env:TF_STATE_STORAGE
+        TF_STATE_CONTAINER = $env:TF_STATE_CONTAINER
+        TF_STATE_KEY       = $env:TF_STATE_KEY
+      }
+
+      $missing = @(
+        $backendVars.GetEnumerator() |
+          Where-Object { [string]::IsNullOrWhiteSpace($_.Value) -or $_.Value.Contains('$(') } |
+          ForEach-Object { $_.Key }
+      )
+
+      if ($missing.Count -gt 0) {
+        throw "Missing/unresolved backend variables: $($missing -join ', '). Ensure bootstrap ran in this job or set TF_STATE_* variables in the pipeline."
       }
 
       Copy-Item -Force "$(Pipeline.Workspace)/tfplan/tfplan" (Join-Path $workDir 'tfplan')

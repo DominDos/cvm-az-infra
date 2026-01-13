@@ -8,6 +8,11 @@ pr:
     include:
     - "*"
 
+variables:
+  PREFIX: cvm
+  ENV: dev
+  LOCATION: westeurope
+
 stages:
 - stage: Plan
   displayName: Plan
@@ -17,6 +22,21 @@ stages:
     pool:
       name: Default
     steps:
+    - checkout: self
+
+    - task: AzureCLI@2
+      displayName: Bootstrap Terraform backend (dev)
+      inputs:
+        azureSubscription: SC-AZURE
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $ErrorActionPreference = 'Stop'
+          & "$(Build.SourcesDirectory)/pipelines/scripts/bootstrap-tf-backend.ps1" `
+            -Prefix "$(PREFIX)" `
+            -EnvName "$(ENV)" `
+            -Location "$(LOCATION)"
+
     - template: pipelines/templates/terraform-plan.yml
       parameters:
         azureServiceConnection: SC-AZURE
@@ -37,6 +57,21 @@ stages:
       runOnce:
         deploy:
           steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: Bootstrap Terraform backend (dev)
+            inputs:
+              azureSubscription: SC-AZURE
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $ErrorActionPreference = 'Stop'
+                & "$(Build.SourcesDirectory)/pipelines/scripts/bootstrap-tf-backend.ps1" `
+                  -Prefix "$(PREFIX)" `
+                  -EnvName "$(ENV)" `
+                  -Location "$(LOCATION)"
+
           - template: pipelines/templates/terraform-apply.yml
             parameters:
               azureServiceConnection: SC-AZURE
