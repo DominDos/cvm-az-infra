@@ -39,6 +39,11 @@ steps:
     addSpnToEnvironment: true
     scriptType: pscore
     scriptLocation: inlineScript
+  env:
+    TF_STATE_RG: $(TF_STATE_RG)
+    TF_STATE_STORAGE: $(TF_STATE_STORAGE)
+    TF_STATE_CONTAINER: $(TF_STATE_CONTAINER)
+    TF_STATE_KEY: $(TF_STATE_KEY)
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
@@ -49,11 +54,18 @@ steps:
       $env:ARM_TENANT_ID = $env:tenantId
       $env:ARM_SUBSCRIPTION_ID = $env:subscriptionId
 
+      if ([string]::IsNullOrWhiteSpace($env:TF_STATE_RG) -or
+          [string]::IsNullOrWhiteSpace($env:TF_STATE_STORAGE) -or
+          [string]::IsNullOrWhiteSpace($env:TF_STATE_CONTAINER) -or
+          [string]::IsNullOrWhiteSpace($env:TF_STATE_KEY)) {
+        throw 'Missing required backend variables: TF_STATE_RG, TF_STATE_STORAGE, TF_STATE_CONTAINER, TF_STATE_KEY.'
+      }
+
       terraform init -input=false `
-        -backend-config="resource_group_name=$(TF_STATE_RG)" `
-        -backend-config="storage_account_name=$(TF_STATE_STORAGE)" `
-        -backend-config="container_name=$(TF_STATE_CONTAINER)" `
-        -backend-config="key=$(TF_STATE_KEY)"
+        -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
+        -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
+        -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
+        -backend-config="key=$($env:TF_STATE_KEY)"
 
       terraform validate
       terraform plan -out=tfplan -input=false

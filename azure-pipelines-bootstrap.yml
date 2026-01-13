@@ -31,7 +31,4 @@ stages:
             -EnvName "$(ENV)" `
             -Location "$(LOCATION)"
 
-          Write-Host "TF_STATE_RG=$(TF_STATE_RG)"
-          Write-Host "TF_STATE_STORAGE=$(TF_STATE_STORAGE)"
-          Write-Host "TF_STATE_CONTAINER=$(TF_STATE_CONTAINER)"
-          Write-Host "TF_STATE_KEY=$(TF_STATE_KEY)"
+          Write-Host 'TF backend bootstrap completed; TF_STATE_* pipeline variables set for subsequent steps/jobs.'
