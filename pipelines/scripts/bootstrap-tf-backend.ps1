@@ -59,6 +59,7 @@ Write-Host "##vso[task.setvariable variable=TF_STATE_RG]$stateRg"
 Write-Host "##vso[task.setvariable variable=TF_STATE_STORAGE]$storageAccountName"
 Write-Host "##vso[task.setvariable variable=TF_STATE_CONTAINER]$Container"
 Write-Host "##vso[task.setvariable variable=TF_STATE_KEY]$tfStateKey"
+Write-Host "##vso[task.setvariable variable=TF_STATE_ACCESS_KEY;issecret=true]$accountKey"
 
 Write-Host 'Backend created/verified:'
 Write-Host "  resource_group_name=$stateRg"

@@ -67,10 +67,11 @@ steps:
       }
 
       $backendVars = @{
-        TF_STATE_RG        = $env:TF_STATE_RG
-        TF_STATE_STORAGE   = $env:TF_STATE_STORAGE
-        TF_STATE_CONTAINER = $env:TF_STATE_CONTAINER
-        TF_STATE_KEY       = $env:TF_STATE_KEY
+        TF_STATE_RG         = $env:TF_STATE_RG
+        TF_STATE_STORAGE    = $env:TF_STATE_STORAGE
+        TF_STATE_CONTAINER  = $env:TF_STATE_CONTAINER
+        TF_STATE_KEY        = $env:TF_STATE_KEY
+        TF_STATE_ACCESS_KEY = $env:TF_STATE_ACCESS_KEY
       }
 
       $missing = @(
@@ -82,6 +83,9 @@ steps:
       if ($missing.Count -gt 0) {
         throw "Missing/unresolved backend variables: $($missing -join ', '). Ensure bootstrap ran in this job or set TF_STATE_* variables in the pipeline."
       }
+
+      # Use storage account access key for backend data-plane auth (avoids needing Blob Data roles).
+      $env:ARM_ACCESS_KEY = $env:TF_STATE_ACCESS_KEY
 
       Copy-Item -Force "$(Pipeline.Workspace)/tfplan/tfplan" (Join-Path $workDir 'tfplan')
 
@@ -112,6 +116,7 @@ steps:
     TF_STATE_STORAGE: $(TF_STATE_STORAGE)
     TF_STATE_CONTAINER: $(TF_STATE_CONTAINER)
     TF_STATE_KEY: $(TF_STATE_KEY)
+    TF_STATE_ACCESS_KEY: $(TF_STATE_ACCESS_KEY)
 
 - task: AzureCLI@2
   displayName: Install ingress-nginx
