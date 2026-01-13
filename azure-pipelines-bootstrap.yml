@@ -2,7 +2,7 @@ trigger: none
 pr: none
 
 pool:
-  name: default
+  name: Default
 
 variables:
   PREFIX: cvm
@@ -21,17 +21,17 @@ stages:
       displayName: Bootstrap remote state backend
       inputs:
         azureSubscription: SC-AZURE
-        scriptType: bash
+        scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          set -euo pipefail
-          chmod +x pipelines/scripts/bootstrap-tf-backend.sh
-          ./pipelines/scripts/bootstrap-tf-backend.sh \
-            --prefix "$(PREFIX)" \
-            --env "$(ENV)" \
-            --location "$(LOCATION)"
+          $ErrorActionPreference = 'Stop'
 
-          echo "TF_STATE_RG=$(TF_STATE_RG)"
-          echo "TF_STATE_STORAGE=$(TF_STATE_STORAGE)"
-          echo "TF_STATE_CONTAINER=$(TF_STATE_CONTAINER)"
-          echo "TF_STATE_KEY=$(TF_STATE_KEY)"
+          & "$(Build.SourcesDirectory)/pipelines/scripts/bootstrap-tf-backend.ps1" `
+            -Prefix "$(PREFIX)" `
+            -EnvName "$(ENV)" `
+            -Location "$(LOCATION)"
+
+          Write-Host "TF_STATE_RG=$(TF_STATE_RG)"
+          Write-Host "TF_STATE_STORAGE=$(TF_STATE_STORAGE)"
+          Write-Host "TF_STATE_CONTAINER=$(TF_STATE_CONTAINER)"
+          Write-Host "TF_STATE_KEY=$(TF_STATE_KEY)"

@@ -15,7 +15,7 @@ stages:
   - job: Plan
     displayName: Terraform plan
     pool:
-      name: default
+      name: Default
     steps:
     - template: pipelines/templates/terraform-plan.yml
       parameters:
@@ -32,7 +32,7 @@ stages:
     displayName: Terraform apply (dev)
     environment: cvm-dev
     pool:
-      name: default
+      name: Default
     strategy:
       runOnce:
         deploy:
