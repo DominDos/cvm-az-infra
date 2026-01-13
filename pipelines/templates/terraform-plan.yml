@@ -56,7 +56,11 @@ steps:
         throw 'Missing required backend variables: TF_STATE_RG, TF_STATE_STORAGE, TF_STATE_CONTAINER, TF_STATE_KEY.'
       }
 
-      terraform init -input=false `
+      if (Test-Path .terraform) {
+        Remove-Item -Recurse -Force .terraform
+      }
+
+      terraform init -input=false -reconfigure `
         -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
