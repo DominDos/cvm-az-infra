@@ -155,7 +155,8 @@ steps:
 
       $helmVersion = '3.14.4'
       $helmInstallDir = "$(Agent.TempDirectory)/helm/$helmVersion"
-      $helmExe = Join-Path $helmInstallDir 'windows-amd64/helm.exe'
+      $helmDir = Join-Path $helmInstallDir 'windows-amd64'
+      $helmExe = Join-Path $helmDir 'helm.exe'
 
       if (-not (Test-Path $helmExe)) {
         New-Item -ItemType Directory -Force -Path $helmInstallDir | Out-Null
@@ -165,8 +166,12 @@ steps:
         Expand-Archive -Path $zipPath -DestinationPath $helmInstallDir -Force
       }
 
-      Write-Host "##vso[task.prependpath]$(Join-Path $helmInstallDir 'windows-amd64')"
-      helm version
+      if (-not (Test-Path $helmExe)) {
+        throw "Helm install failed: expected $helmExe"
+      }
+
+      $env:PATH = "$helmDir;$env:PATH"
+      & $helmExe version
 
       $env:AKS_NAME = '$(AKS_NAME)'
       $env:AKS_RG = '$(AKS_RG)'
