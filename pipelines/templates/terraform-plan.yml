@@ -30,7 +30,32 @@ steps:
 - pwsh: |
     $ErrorActionPreference = 'Stop'
 
-    $workDir = Join-Path "$(Build.SourcesDirectory)" '${{ parameters.workingDirectory }}'
+    $relWorkDir = '${{ parameters.workingDirectory }}'
+
+    $roots = @(
+      "$(Build.SourcesDirectory)",
+      "$(System.DefaultWorkingDirectory)",
+      "$(Pipeline.Workspace)/s"
+    )
+
+    $workDir = $null
+    foreach ($root in $roots) {
+      if ([string]::IsNullOrWhiteSpace($root)) { continue }
+
+      $candidate = Join-Path $root $relWorkDir
+      if (Test-Path $candidate) { $workDir = $candidate; break }
+
+      $candidate = Join-Path (Join-Path $root "$(Build.Repository.Name)") $relWorkDir
+      if (Test-Path $candidate) { $workDir = $candidate; break }
+    }
+
+    if (-not $workDir) {
+      Write-Host "Build.SourcesDirectory=$(Build.SourcesDirectory)"
+      Write-Host "System.DefaultWorkingDirectory=$(System.DefaultWorkingDirectory)"
+      Write-Host "Pipeline.Workspace=$(Pipeline.Workspace)"
+      throw "Terraform workingDirectory '$relWorkDir' not found under expected checkout roots."
+    }
+
     terraform -chdir="$workDir" fmt -check -recursive
     if ($LASTEXITCODE -ne 0) { throw "terraform fmt failed with exit code $LASTEXITCODE" }
   displayName: Terraform fmt (check)
@@ -45,7 +70,31 @@ steps:
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
-      $workDir = Join-Path "$(Build.SourcesDirectory)" '${{ parameters.workingDirectory }}'
+      $relWorkDir = '${{ parameters.workingDirectory }}'
+
+      $roots = @(
+        "$(Build.SourcesDirectory)",
+        "$(System.DefaultWorkingDirectory)",
+        "$(Pipeline.Workspace)/s"
+      )
+
+      $workDir = $null
+      foreach ($root in $roots) {
+        if ([string]::IsNullOrWhiteSpace($root)) { continue }
+
+        $candidate = Join-Path $root $relWorkDir
+        if (Test-Path $candidate) { $workDir = $candidate; break }
+
+        $candidate = Join-Path (Join-Path $root "$(Build.Repository.Name)") $relWorkDir
+        if (Test-Path $candidate) { $workDir = $candidate; break }
+      }
+
+      if (-not $workDir) {
+        Write-Host "Build.SourcesDirectory=$(Build.SourcesDirectory)"
+        Write-Host "System.DefaultWorkingDirectory=$(System.DefaultWorkingDirectory)"
+        Write-Host "Pipeline.Workspace=$(Pipeline.Workspace)"
+        throw "Terraform workingDirectory '$relWorkDir' not found under expected checkout roots."
+      }
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
       $env:ARM_TENANT_ID = $env:tenantId
@@ -108,6 +157,10 @@ steps:
       if ($LASTEXITCODE -ne 0) { throw "terraform validate failed with exit code $LASTEXITCODE" }
       terraform -chdir="$workDir" plan -out=tfplan -input=false
       if ($LASTEXITCODE -ne 0) { throw "terraform plan failed with exit code $LASTEXITCODE" }
+
+        $artifactDir = "$(Pipeline.Workspace)/tfplan"
+        New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+        Copy-Item -Force (Join-Path $workDir 'tfplan') (Join-Path $artifactDir 'tfplan')
   env:
     TF_STATE_RG: $(TF_STATE_RG)
     TF_STATE_STORAGE: $(TF_STATE_STORAGE)
@@ -117,6 +170,6 @@ steps:
 - task: PublishPipelineArtifact@1
   displayName: Publish tfplan artifact
   inputs:
-    targetPath: '$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}/tfplan'
+    targetPath: '$(Pipeline.Workspace)/tfplan'
     artifact: tfplan
     publishLocation: pipeline
