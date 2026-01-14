@@ -43,7 +43,7 @@ steps:
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
-      $workDir = '${{ parameters.workingDirectory }}'
+      $workDir = Join-Path "$(Build.SourcesDirectory)" '${{ parameters.workingDirectory }}'
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
       $env:ARM_TENANT_ID = $env:tenantId

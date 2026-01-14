@@ -30,7 +30,8 @@ steps:
 - pwsh: |
     $ErrorActionPreference = 'Stop'
 
-    terraform -chdir='${{ parameters.workingDirectory }}' fmt -check -recursive
+    $workDir = Join-Path "$(Build.SourcesDirectory)" '${{ parameters.workingDirectory }}'
+    terraform -chdir="$workDir" fmt -check -recursive
     if ($LASTEXITCODE -ne 0) { throw "terraform fmt failed with exit code $LASTEXITCODE" }
   displayName: Terraform fmt (check)
 
@@ -44,7 +45,7 @@ steps:
     inlineScript: |
       $ErrorActionPreference = 'Stop'
 
-      $workDir = '${{ parameters.workingDirectory }}'
+      $workDir = Join-Path "$(Build.SourcesDirectory)" '${{ parameters.workingDirectory }}'
 
       $env:ARM_CLIENT_ID = $env:servicePrincipalId
       $env:ARM_TENANT_ID = $env:tenantId
@@ -116,6 +117,6 @@ steps:
 - task: PublishPipelineArtifact@1
   displayName: Publish tfplan artifact
   inputs:
-    targetPath: '${{ parameters.workingDirectory }}/tfplan'
+    targetPath: '$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}/tfplan'
     artifact: tfplan
     publishLocation: pipeline
