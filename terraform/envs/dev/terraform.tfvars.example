@@ -13,4 +13,4 @@ tags = {
 aks_kubernetes_version = null
 
 aks_dns_prefix   = "cvm-dev"
-aks_node_vm_size = "Standard_B2s_v2"
+aks_node_vm_size = "Standard_B2s"
