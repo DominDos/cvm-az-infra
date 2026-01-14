@@ -97,7 +97,7 @@ steps:
         Remove-Item -Recurse -Force $tfDir
       }
 
-      terraform -chdir="$workDir" init -input=false -reconfigure `
+      terraform -chdir="$workDir" init -input=false -reconfigure -upgrade `
         -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `
@@ -132,4 +132,28 @@ steps:
       $env:AKS_NAME = '$(AKS_NAME)'
       $env:AKS_RG = '$(AKS_RG)'
 
-      & "$(Build.SourcesDirectory)/pipelines/scripts/install-nginx-ingress.ps1"
+      $roots = @(
+        "$(Build.SourcesDirectory)",
+        "$(System.DefaultWorkingDirectory)",
+        "$(Pipeline.Workspace)/s"
+      )
+
+      $scriptPath = $null
+      foreach ($root in $roots) {
+        if ([string]::IsNullOrWhiteSpace($root)) { continue }
+
+        $candidate = Join-Path $root 'pipelines/scripts/install-nginx-ingress.ps1'
+        if (Test-Path $candidate) { $scriptPath = $candidate; break }
+
+        $candidate = Join-Path $root "$(Build.Repository.Name)/pipelines/scripts/install-nginx-ingress.ps1"
+        if (Test-Path $candidate) { $scriptPath = $candidate; break }
+      }
+
+      if (-not $scriptPath) {
+        Write-Host "Build.SourcesDirectory=$(Build.SourcesDirectory)"
+        Write-Host "System.DefaultWorkingDirectory=$(System.DefaultWorkingDirectory)"
+        Write-Host "Pipeline.Workspace=$(Pipeline.Workspace)"
+        throw 'install-nginx-ingress.ps1 not found in checked-out sources.'
+      }
+
+      & $scriptPath

@@ -96,7 +96,7 @@ steps:
         Remove-Item -Recurse -Force $tfDir
       }
 
-      terraform -chdir="$workDir" init -input=false -reconfigure `
+      terraform -chdir="$workDir" init -input=false -reconfigure -upgrade `
         -backend-config="resource_group_name=$($env:TF_STATE_RG)" `
         -backend-config="storage_account_name=$($env:TF_STATE_STORAGE)" `
         -backend-config="container_name=$($env:TF_STATE_CONTAINER)" `

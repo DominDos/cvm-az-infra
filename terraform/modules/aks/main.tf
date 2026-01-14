@@ -18,6 +18,7 @@ resource "azurerm_kubernetes_cluster" "this" {
     name                 = "system"
     vm_size              = var.node_vm_size
     type                 = "VirtualMachineScaleSets"
+    auto_scaling_enabled = true
     min_count            = var.node_min_count
     max_count            = var.node_max_count
     orchestrator_version = var.kubernetes_version
