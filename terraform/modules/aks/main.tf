@@ -16,6 +16,7 @@ resource "azurerm_kubernetes_cluster" "this" {
 
   default_node_pool {
     name                 = "system"
+    temporary_name_for_rotation = "systemtmp"
     vm_size              = var.node_vm_size
     type                 = "VirtualMachineScaleSets"
     auto_scaling_enabled = true
