@@ -32,7 +32,7 @@ variable "aks_kubernetes_version" {
 variable "aks_dns_prefix" {
   type        = string
   description = "AKS DNS prefix"
-  default     = "${var.prefix}-${var.env}-aks"
+  default     = "cvm-dev-aks"
 }
 
 variable "aks_node_vm_size" {
