@@ -77,3 +77,12 @@ module "aks" {
   log_analytics_workspace_id = module.log_analytics.workspace_id
   tags                       = local.tags
 }
+
+# Needed so AKS can attach/use the egress Public IP during load balancer operations.
+# Without this, Kubernetes Services of type LoadBalancer can fail with LinkedAuthorizationFailed
+# (missing Microsoft.Network/publicIPAddresses/join/action on the egress PIP).
+resource "azurerm_role_assignment" "aks_egress_pip_network_contributor" {
+  scope                = azurerm_public_ip.aks_egress.id
+  role_definition_name = "Network Contributor"
+  principal_id         = module.aks.cluster_identity_principal_id
+}
