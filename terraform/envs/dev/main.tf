@@ -73,7 +73,7 @@ module "aks" {
   node_vm_size               = var.aks_node_vm_size
   node_min_count             = 1
   node_max_count             = 2
-  outbound_public_ip_id       = azurerm_public_ip.aks_egress.id
+  outbound_public_ip_id      = azurerm_public_ip.aks_egress.id
   log_analytics_workspace_id = module.log_analytics.workspace_id
   tags                       = local.tags
 }
