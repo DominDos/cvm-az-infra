@@ -27,3 +27,8 @@ output "log_analytics_workspace_id" {
   value       = module.log_analytics.workspace_id
   description = "Log Analytics Workspace ID"
 }
+
+output "aks_egress_public_ip" {
+  value       = azurerm_public_ip.aks_egress.ip_address
+  description = "AKS egress public IP address"
+}

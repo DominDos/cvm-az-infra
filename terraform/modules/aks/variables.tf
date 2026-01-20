@@ -53,3 +53,10 @@ variable "tags" {
   description = "Tags"
   default     = {}
 }
+
+variable "outbound_public_ip_id" {
+  type        = string
+  description = "Public IP resource ID to use for AKS outbound (egress)"
+  default     = null
+  nullable    = true
+}

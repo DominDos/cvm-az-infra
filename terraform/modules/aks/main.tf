@@ -28,6 +28,14 @@ resource "azurerm_kubernetes_cluster" "this" {
   network_profile {
     network_plugin    = "azure"
     load_balancer_sku = "standard"
+
+    dynamic "load_balancer_profile" {
+      for_each = var.outbound_public_ip_id == null ? [] : [var.outbound_public_ip_id]
+
+      content {
+        outbound_ip_address_ids = [load_balancer_profile.value]
+      }
+    }
   }
 
   oms_agent {
