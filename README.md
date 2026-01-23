@@ -1,6 +1,6 @@
 # cvm-az-infra
 
-Terraform-based Azure infrastructure for **Centralni vulnerability management (CVM)**.
+Terraform-based Azure infrastructure for **Central vulnerability management (CVM)**.
 
 Key rule for this repo: **Terraform runs only from Azure DevOps Pipelines** (no local `terraform apply`).
 
@@ -12,6 +12,12 @@ Key rule for this repo: **Terraform runs only from Azure DevOps Pipelines** (no 
 - (Pipeline post-step) ingress-nginx installed via Helm
 
 ## How to run
+
+### Canonical pipeline definitions
+- Main pipeline (plan/apply): `azure-pipelines.yml` (repo root)
+- One-time/manual backend bootstrap: `azure-pipelines-bootstrap.yml` (repo root)
+
+Note: An older pipeline definition previously lived at `pipelines/azure-pipelines.yml` and has been archived to `pipelines/legacy/azure-pipelines.legacy.yml`.
 
 ### 1) Bootstrap Terraform remote state (run once, then re-run only if needed)
 Run the manual pipeline: `azure-pipelines-bootstrap.yml`.
@@ -64,6 +70,7 @@ Terraform outputs include:
 - `acr_name`
 - `acr_login_server`
 - `log_analytics_workspace_id`
+- `aks_egress_public_ip`
 
 These are intended to be consumed by app/platform repos (e.g., for AKS deployment targets and ACR references).
 

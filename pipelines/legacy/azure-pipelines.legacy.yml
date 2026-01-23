@@ -1,5 +1,15 @@
+# LEGACY PIPELINE (archived)
+#
+# This pipeline is kept for historical reference only.
+# Canonical pipeline definitions live at the repo root:
+# - azure-pipelines-bootstrap.yml (manual bootstrap of TF remote state)
+# - azure-pipelines.yml (plan/apply using shared templates)
+#
+# If you had an Azure DevOps pipeline pointing at this file, update it to use
+# the root `azure-pipelines.yml` instead.
+
 trigger:
-- main
+- none
 
 pool:
   name: Default
